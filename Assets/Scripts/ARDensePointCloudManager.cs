@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
+using Random = UnityEngine.Random;
 
 namespace Cdm.XR.Extensions
 {
@@ -18,6 +19,7 @@ namespace Cdm.XR.Extensions
         // Maximum number of points we store in a point cloud.
         public int maxPoints = 3000000;
         public int maxPointsPerFrame = 500;
+        public int totalPoints = 0;
 
         [SerializeField, Range(0f, 1f)] 
         private float _minConfidence = 0.5f;
@@ -65,6 +67,45 @@ namespace Cdm.XR.Extensions
             StartCoroutine(InitializeSubsystems());
 #endif
         }
+        
+        private void OnEnable() {
+#if UNITY_EDITOR
+            InvokeRepeating ("SimulateAddPoint", 0f, 1f);
+#endif
+        }
+        
+        void OnDestroy () {
+#if UNITY_EDITOR
+            CancelInvoke();
+#endif
+        }
+        
+#if UNITY_EDITOR
+        private int size = 10;
+        
+        void SimulateAddPoint () {
+            if (pointCloud == null) {
+                return;
+            }
+            pointCloud.BeginUpdate ();
+            int nbPointsToAdd = 100;
+            totalPoints += nbPointsToAdd;
+
+            for (int index = 0; index < nbPointsToAdd; index++) {
+                if (pointCloud.isFull) {
+                    // Complete current point cloud update operation.
+                    pointCloud.EndUpdate ();
+
+                    // Create new point cloud and continue to adding points.
+                    CreateNewPointCloud ();
+                    pointCloud.BeginUpdate ();
+                }
+                pointCloud.Add (new Vector3 (Random.value * size,Random.value * size,Random.value * size), Vector3.up, new Color32 (0,255,0,255), 1);
+            }
+            pointCloud.EndUpdate ();
+            OnPointCloudUpdated ();
+        }
+#endif
 
         private void CreateNewPointCloud()
         {
