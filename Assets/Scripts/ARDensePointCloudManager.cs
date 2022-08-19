@@ -214,6 +214,7 @@ namespace Cdm.XR.Extensions
                     {
                         var normal = (_mainCamera.transform.position - worldPoint).normalized;
                         pointCloud.Add(worldPoint, normal, color, depthConfidence);
+                        totalPoints += 1;
                     }
                 }
 

@@ -181,9 +181,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c278f07e373764bfbb8ea8aa231af0d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pointCloudPrefab: {fileID: 8249968419549796717, guid: e3fc0bab29a034aae919f6bbdb768bc6, type: 3}
-  maxPoints: 500000
-  maxPointsPerFrame: 500
+  pointCloudPrefab: {fileID: 7416757956739308149, guid: 72193561e80fb463c9501fe36dde3790, type: 3}
+  maxPoints: 10000000
+  maxPointsPerFrame: 10000
   totalPoints: 0
   _minConfidence: 0.75
   _cameraRotationThreshold: 2
