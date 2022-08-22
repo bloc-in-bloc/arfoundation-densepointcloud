@@ -10,15 +10,25 @@ namespace Cdm.XR.Extensions
 
         private ComputeBuffer _pointsbuffer;
         private ComputeBuffer _colorsbuffer;
+
+        private int nbPoints = 0;
+        
+        protected override void Awake()
+        {
+            base.Awake ();
+            int count = 10000000;
+            _pointsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
+            _colorsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
+            material.SetBuffer ("_PointsBuffer", _pointsbuffer);
+            material.SetBuffer ("_ColorsBuffer", _colorsbuffer);
+        }
         
         void OnRenderObject () {
             if (_pointsbuffer == null || _colorsbuffer == null) {
                 return;
             }
             material.SetPass (0);
-            material.SetBuffer ("_PointsBuffer", _pointsbuffer);
-            material.SetBuffer ("_ColorsBuffer", _colorsbuffer);
-            Graphics.DrawProceduralNow (MeshTopology.Points, _pointsbuffer.count, 1);
+            Graphics.DrawProceduralNow (MeshTopology.Points, nbPoints);
         }
 
         protected override void OnPointCloudUpdated(PointCloudUpdatedEventArgs e) {
@@ -27,25 +37,28 @@ namespace Cdm.XR.Extensions
             if (e.count == 0) {
                 return;
             }
-            if (_pointsbuffer != null) {
-                _pointsbuffer.Release ();
-            }
-            _pointsbuffer = new ComputeBuffer (e.count, sizeof (float) * 3, ComputeBufferType.Default);
-            if (_colorsbuffer != null) {
-                _colorsbuffer.Release ();
-            }
-            _colorsbuffer = new ComputeBuffer (e.count, sizeof (float) * 4, ComputeBufferType.Default);
-            
-            var vertices = new NativeArray<float3>(e.count, Allocator.Temp);
+
+            var vertices = new NativeArray<float4>(e.count, Allocator.Temp);
             var colors = new NativeArray<float4>(e.count, Allocator.Temp);
             for (var i = 0; i < vertices.Length; i++) {
-                vertices[i] = e.pointCloud.points[e.startIndex + i];
+                Vector3 pos = e.pointCloud.points[e.startIndex + i];
+                vertices[i] = new float4 (pos.x, pos.y, pos.z, 1);
                 Color32 color = e.pointCloud.colors[e.startIndex + i];
                 colors[i] = new float4 (color.r / (float)byte.MaxValue,color.g / (float)byte.MaxValue,color.b / (float)byte.MaxValue, color.a / (float)byte.MaxValue);
             }
+            
+            nbPoints += e.count;
 
-            _pointsbuffer.SetData(vertices);
-            _colorsbuffer.SetData(colors);
+            NativeArray<float4> tmpPoints = _pointsbuffer.BeginWrite<float4> (e.startIndex, e.count);
+            tmpPoints.CopyFrom (vertices);
+            _pointsbuffer.EndWrite<float4> (e.count);
+            
+            NativeArray<float4> tmpColors = _colorsbuffer.BeginWrite<float4> (e.startIndex, e.count);
+            tmpColors.CopyFrom (colors);
+            _colorsbuffer.EndWrite<float4> (e.count);
+
+            vertices.Dispose ();
+            colors.Dispose ();
         }
     }
 }
