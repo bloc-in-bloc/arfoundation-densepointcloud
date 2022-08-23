@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Cdm.XR.Extensions
 {
-    public class ARDensePointCloudComputeBufferVisualizer : ARDensePointCloudVisualizer
+    public class ARDensePointCloudComputeBufferIndirectVisualizer : ARDensePointCloudVisualizer
     {
         public Material material;
 
@@ -13,26 +13,37 @@ namespace Cdm.XR.Extensions
 
         private int nbPoints = 0;
         private ARDensePointCloud _pointCloud;
+        private ComputeBuffer mArgBuffer;
+        private Bounds _bounds;
         
         protected override void Awake()
         {
             base.Awake ();
             _pointCloud = GetComponent<ARDensePointCloud> ();
-            int count = 1000000;
+            int count = 10000000;
             _pointsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
             _colorsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
             material.SetBuffer ("_PointsBuffer", _pointsbuffer);
             material.SetBuffer ("_ColorsBuffer", _colorsbuffer);
+            
+            //Args for indirect draw
+            int[] args = new int[]
+            {
+                (int)count, //vertex count per instance
+                (int)1, //instance count
+                (int)0, //start vertex location
+                (int)0 //start instance location
+            };
+            mArgBuffer = new ComputeBuffer(args.Length, sizeof(int), ComputeBufferType.IndirectArguments);
+            mArgBuffer.SetData(args);
+            
+            _bounds = new Bounds (new Vector3 (0, 0, 0), new Vector3 (10, 10, 10));
         }
         
-        void OnRenderObject () {
-            if (_pointsbuffer == null || _colorsbuffer == null) {
-                return;
-            }
-            material.SetPass (0);
-            Graphics.DrawProceduralNow (MeshTopology.Points, nbPoints);
+        void Update () {
+            Graphics.DrawProceduralIndirect(material, _bounds, MeshTopology.Points, mArgBuffer);
         }
-
+        
         protected override void OnPointCloudUpdated(PointCloudUpdatedEventArgs e) {
             base.OnPointCloudUpdated(e);
 
