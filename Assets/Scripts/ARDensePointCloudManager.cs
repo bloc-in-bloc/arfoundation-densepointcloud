@@ -88,7 +88,7 @@ namespace Cdm.XR.Extensions
                 return;
             }
             pointCloud.BeginUpdate ();
-            int nbPointsToAdd = 100;
+            int nbPointsToAdd = 10000;
             totalPoints += nbPointsToAdd;
 
             for (int index = 0; index < nbPointsToAdd; index++) {

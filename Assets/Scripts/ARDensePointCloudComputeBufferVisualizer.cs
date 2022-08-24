@@ -1,12 +1,14 @@
+using System;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Cdm.XR.Extensions
 {
-    public class ARDensePointCloudComputeBufferVisualizer : ARDensePointCloudVisualizer
-    {
-        public Material material;
+    public class ARDensePointCloudComputeBufferVisualizer : ARDensePointCloudVisualizer {
+        
+        public Shader shader;
+        private Material material;
 
         private ComputeBuffer _pointsbuffer;
         private ComputeBuffer _colorsbuffer;
@@ -16,9 +18,15 @@ namespace Cdm.XR.Extensions
         protected override void Awake()
         {
             base.Awake ();
-            int count = 10000000;
+            int count = 110000;
             _pointsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
             _colorsbuffer = new ComputeBuffer (count, sizeof (float) * 4, ComputeBufferType.Default, ComputeBufferMode.SubUpdates);
+            
+            if (material == null) {
+                material = new Material (shader);
+                material.SetFloat ("_PointSize", 10);
+            }
+            
             material.SetBuffer ("_PointsBuffer", _pointsbuffer);
             material.SetBuffer ("_ColorsBuffer", _colorsbuffer);
         }

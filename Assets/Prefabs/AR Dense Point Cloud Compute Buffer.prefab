@@ -56,4 +56,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c023a59ecfbfa499483653c108b99a34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  material: {fileID: 2100000, guid: 8a24c1bb0ed9341c9895693f34dba349, type: 2}
+  shader: {fileID: 4800000, guid: 9023e96af570f485fb820096e6349dd3, type: 3}
