@@ -14,8 +14,8 @@
                 #pragma fragment PSMain
                 #pragma target 5.0
      
-                StructuredBuffer<float4> _PointsBuffer;
-                StructuredBuffer<float4> _ColorsBuffer;
+                StructuredBuffer<uint> _ColorsBuffer;
+                StructuredBuffer<float3> _PointsBuffer;
                 float _PointSize;
                 float4x4 _Transform;
                 
@@ -24,17 +24,26 @@
                 struct shaderdata
                 {
                     float4 vertex : SV_POSITION;
-                    float4 color : TEXCOORD1;
+                    half3 color : COLOR;
                     float psize : PSIZE;
                     UNITY_FOG_COORDS(0)
                 };
+                
+                half3 PcxDecodeColor(uint data)
+                {
+                    half r = (data      ) & 0xff;
+                    half g = (data >>  8) & 0xff;
+                    half b = (data >> 16) & 0xff;
+                    half a = (data >> 24) & 0xff;
+                    return half3(r, g, b) * a * 16 / (255 * 255);
+                }
      
                 shaderdata VSMain(uint id : SV_VertexID)
                 {
                     shaderdata vs;
-                    float4 pt = _PointsBuffer[id];
+                    float3 pt = _PointsBuffer[id];
                     vs.vertex = UnityObjectToClipPos(pt);
-                    vs.color = _ColorsBuffer[id];
+                    vs.color = PcxDecodeColor(_ColorsBuffer[id]);
                     vs.psize = _PointSize;
                     UNITY_TRANSFER_FOG(vs, vs.vertex);
                     return vs;
@@ -42,8 +51,9 @@
      
                 float4 PSMain(shaderdata ps) : SV_TARGET
                 {
-                    UNITY_APPLY_FOG(ps.fogCoord, ps.color);
-                    return ps.color;
+                    float4 c = float4(ps.color, 255);
+                    UNITY_APPLY_FOG(ps.fogCoord, c);
+                    return c;
                 }
                
                 ENDCG
